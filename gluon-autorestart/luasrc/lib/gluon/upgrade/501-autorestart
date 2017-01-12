@@ -1,0 +1,25 @@
+#!/usr/bin/lua
+
+-- Initialize the pseudo random number generator
+math.randomseed(os.time())
+math.random(); math.random(); math.random()
+
+local site = require 'gluon.site_config'
+local interval = site.autorestart.interval
+local hour = site.autorestart.starthour + math.random(0,site.autorestart.endhour)
+local minute = math.random(30, 59)
+
+-- Currently the day of week is hardcoded if weekly reboot is used (Friday)
+if interval == "daily" then
+dayofweek = "*"
+elseif interval == "weekly" then
+dayofweek = "5"
+else
+dayofweek = "*"
+end
+
+local crontab_line = string.format('%s %s * * %s /usr/sbin/autorestart\n', tostring(minute), tostring(hour), tostring(dayofweek))
+
+local f = io.open('/usr/lib/micron.d/autorestart', 'w')
+f:write(crontab_line)
+f:close()
