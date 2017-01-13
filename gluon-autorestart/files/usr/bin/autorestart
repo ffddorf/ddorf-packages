@@ -1,5 +1,4 @@
 #!/bin/sh
-PIDFILE=/var/run/tunneldigger.mesh-vpn.pid
 
 if [ "$(pidof sysupgrade)" = "" ]; then
     logger -t autorestart Node will be restarted in 5 seconds
