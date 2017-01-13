@@ -6,8 +6,9 @@ math.random(); math.random(); math.random()
 
 local site = require 'gluon.site_config'
 local interval = site.autorestart.interval
-local hour = site.autorestart.starthour + math.random(0,site.autorestart.endhour)
-local minute = math.random(30, 59)
+local timeframe = site.autorestart.endhour - site.autorestart.starthour
+local hour = site.autorestart.starthour + math.random(0,timeframe)
+local minute = math.random(0, 59)
 
 -- Currently the day of week is hardcoded if weekly reboot is used (Friday)
 if interval == "daily" then
