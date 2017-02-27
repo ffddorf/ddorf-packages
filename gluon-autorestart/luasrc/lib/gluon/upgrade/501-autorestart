@@ -12,11 +12,11 @@ local minute = math.random(0, 59)
 
 -- Currently the day of week is hardcoded if weekly reboot is used (Friday)
 if interval == "daily" then
-dayofweek = "*"
+    dayofweek = "*"
 elseif interval == "weekly" then
-dayofweek = "5"
+    dayofweek = "5"
 else
-dayofweek = "*"
+    dayofweek = "*"
 end
 
 local crontab_line = string.format('%s %s * * %s /usr/sbin/autorestart\n', tostring(minute), tostring(hour), tostring(dayofweek))
