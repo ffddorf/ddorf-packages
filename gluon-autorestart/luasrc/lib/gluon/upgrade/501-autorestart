@@ -6,7 +6,7 @@ math.random(); math.random(); math.random()
 
 local site = require 'gluon.site_config'
 local interval = site.autorestart.interval
-local timeframe = site.autorestart.endhour - site.autorestart.starthour
+local timeframe = site.autorestart.endhour - site.autorestart.starthour - 1
 local hour = site.autorestart.starthour + math.random(0,timeframe)
 local minute = math.random(0, 59)
 
