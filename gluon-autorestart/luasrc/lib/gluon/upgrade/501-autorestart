@@ -10,11 +10,10 @@ local timeframe = site.autorestart.endhour - site.autorestart.starthour - 1
 local hour = site.autorestart.starthour + math.random(0,timeframe)
 local minute = math.random(0, 59)
 
--- Currently the day of week is hardcoded if weekly reboot is used (Friday)
 if interval == "daily" then
     dayofweek = "*"
 elseif interval == "weekly" then
-    dayofweek = "5"
+    dayofweek = math.random(1,7)
 else
     dayofweek = "*"
 end
