@@ -19,4 +19,4 @@ end
 
 local crontab_line = string.format('%s %s * * %s /usr/sbin/autorestart\n', tostring(minute), tostring(hour), tostring(dayofweek))
 
-fs.writefile('/usr/lib/micron.d/autorestart', 'crontab_line')
+fs.writefile('/usr/lib/micron.d/autorestart', crontab_line)
