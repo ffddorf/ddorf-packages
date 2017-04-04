@@ -1,0 +1,8 @@
+#!/usr/bin/lua
+
+local uci = require('simple-uci').cursor()
+
+uci:delete('network', 'mesh_radio0_vlan')
+uci:delete('network', 'mesh_radio1_vlan')
+
+uci:save('network')
