@@ -1,0 +1,62 @@
+#!/bin/sh
+PIDFILE=/var/run/tunneldigger.mesh-vpn.pid
+GWCHECKS=10
+
+check_td_state() {
+    local result="false"
+    if [[ "$(pgrep tunneldigger | head -n 1)" == "$(cat ${PIDFILE})" ]] && [[ "$(cat ${PIDFILE})" != "" ]]; then
+        result="true"
+    fi
+    echo ${result}
+}
+
+check_wan_state() {
+    local result="false"
+    if [[ "$(ip a show dev br-wan |head -n 1| cut -f9 -d' ')" == "UP" ]]; then
+        result="true"
+    fi
+    echo ${result}
+}
+
+check_for_neighbours() {
+    local result="false"
+    if [[ "$(batctl o |grep mesh-vpn |wc -l)" != "0" ]]; then
+        result="true"
+    fi
+    echo ${result}
+}
+
+ping_current_gw() {
+    local result="false"
+    local gw=$(batctl gwl |grep -e '^*' |cut -d' ' -f2)
+    for i in $(seq 1 ${GWCHECKS}); do
+        if [[ "$(batctl ping -c 1 ${gw})" ]]; then
+            result="true"
+            break
+        fi
+    done
+    echo ${result}
+}
+
+if [[ "$(uci get tunneldigger.@broker[0].enabled)" == "1" ]] && [[ "$(check_wan_state)" == "true" ]]; then
+    #Check if Tunneldigger is running
+    if [[ "$(check_td_state)" == "false" ]]; then
+        /etc/init.d/tunneldigger restart
+        logger -t ffddorf-watchdog "Daemon not running, restarted tunneldigger."
+        exit 0
+    fi
+    #Check if there are any neighbors, restart Tunneldigger if not
+    if [[ "$(check_for_neighbours)" == "false" ]]; then
+        /etc/init.d/tunneldigger restart
+        logger -t ffddorf-watchdog "No neighbours on mesh-vpn interface, restarted tunneldigger."
+        exit 0
+    fi
+    #Ping the chosen gateway if there is one, restart node if its not pingable
+    if [[ "$(batctl gwl |grep -e '^*' |cut -d' ' -f2)" != "" ]]; then
+        if [[ "$(ping_current_gw)" == "false" ]]; then
+            logger -t ffddorf-watchdog "Gateway is not pingable, suspecting issue with the node. Rebooting in 5 seconds"
+            sleep 5
+            [[ "$(pidof sysupgrade)" == "" ]] && reboot
+        fi
+    fi
+fi
