@@ -1,0 +1,25 @@
+#!/usr/bin/lua
+
+local uci = require('simple-uci').cursor()
+local util = require 'gluon.util'
+local json = require 'jsonc'
+local migratordata = assert(json.load('/lib/gluon/migrator.json'))
+local remigrate = migratordata["remigrate"]
+local domain = uci:get('gluon', 'core', 'domain')
+
+if domain and not remigrate then return end
+print("Not configured")
+
+local node = nil
+for k, v in pairs(migratordata["nodes"]) do 
+  if util.node_id() == migratordata["nodes"][k]["node_id"] then
+    node = migratordata["nodes"][k]
+  end
+end
+
+if not node or domain == node["domain"] then return end
+
+
+print(node["node_id"], node["domain"])
+uci:set('gluon', 'core', 'domain', node["domain"])
+uci:commit('gluon')
