@@ -1,14 +1,5 @@
 #!/bin/sh
-PIDFILE=/var/run/tunneldigger.mesh-vpn.pid
 GWCHECKS=10
-
-check_td_state() {
-    local result="false"
-    if [[ "$(pgrep tunneldigger | head -n 1)" == "$(cat ${PIDFILE})" ]] && [[ "$(cat ${PIDFILE})" != "" ]]; then
-        result="true"
-    fi
-    echo ${result}
-}
 
 check_wan_state() {
     local result="false"
@@ -17,15 +8,13 @@ check_wan_state() {
     fi
     echo ${result}
 }
-
-check_for_neighbours() {
+check_for_tunneldigger_tunnelbug() {
     local result="false"
-    if [[ "$(batctl o |grep mesh-vpn |wc -l)" != "0" ]]; then
+    if [[ "$(logread |grep 'Unable to create local L2TP tunnel!' |wc -l)" != "0" ]]; then
         result="true"
     fi
     echo ${result}
 }
-
 ping_current_gw() {
     local result="false"
     local gw=$(batctl gwl |grep -e '^*' |cut -d' ' -f2)
@@ -39,17 +28,12 @@ ping_current_gw() {
 }
 
 if [[ "$(uci get tunneldigger.@broker[0].enabled)" == "1" ]] && [[ "$(check_wan_state)" == "true" ]]; then
-    #Check if Tunneldigger is running
-    if [[ "$(check_td_state)" == "false" ]]; then
+    #Check Tunneldigger is stuck eternaly
+    if [[ "$(check_for_tunneldigger_tunnelbug)" == "true" ]]; then
         /etc/init.d/tunneldigger restart
-        logger -t ffddorf-watchdog "Daemon not running, restarted tunneldigger."
-        exit 0
-    fi
-    #Check if there are any neighbors, restart Tunneldigger if not
-    if [[ "$(check_for_neighbours)" == "false" ]]; then
-        /etc/init.d/tunneldigger restart
-        logger -t ffddorf-watchdog "No neighbours on mesh-vpn interface, restarted tunneldigger."
-        exit 0
+        logger -t ffddorf-watchdog "Seems that Tunneldigger can't create any tunnels. Rebooting in 5 seconds"
+        sleep 5
+        [[ "$(pidof sysupgrade)" == "" ]] && reboot
     fi
     #Ping the chosen gateway if there is one, restart node if its not pingable
     if [[ "$(batctl gwl |grep -e '^*' |cut -d' ' -f2)" != "" ]]; then
